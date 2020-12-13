@@ -1,14 +1,13 @@
 (function() {
     // Mock data. (teszt adat)
-    let todos = [
-        {title: 'Lunch', content: 'Lunch with my friends'},
-        {title: 'Lunch', content: 'Lunch with my friends'},
-        {title: 'Lunch', content: 'Lunch with my friends'},
-      ];
+    let todos = [];
 
     // Parts of date.
     const bodyDay = document.querySelector('.body__day');
     const bodyDate = document.querySelector('.body__date');
+    const todoAddBtn = document.querySelector('.todo__btn');
+    const todoInput = document.querySelector('.todo__input');
+    const todoListpending = document.querySelector('.todo__list--pending');
 
     const dayNames = [
         'Sunday',
@@ -17,7 +16,8 @@
         'Wednesday',
         'Thursday',
         'Friday',
-        'Saturday'];
+        'Saturday',
+    ];
 
     // Localstorage handler object. A Local Storage olyan, mint egy adatbázis. 4 fő művelete van: create: új adat beszúrása, read: olvas belőle, update: meglévőt frissít, delete: töröl
     const localDB = { // Objektum, benne metódusok. 
@@ -46,12 +46,20 @@
     // Initialize application. Applikáció ellenőrzése: van-e mentett teendő, ha igen, meghívja a Local Storage-ból.
 
     const init = () => {
+        showDate();
+        setListeners();
+        loadExistingTodos();
+    };
+
+    // Load existing todos.
+    const loadExistingTodos = () => {
         const savedTodos = localDB.getItem('todos');
         if (savedTodos) {
             todos = savedTodos;
-        };
+        }
 
-        showDate();
+        if (todos && Array.isArray(todos)) 
+            todos.forEach( todo => showTodo(todo) );
     };
 
     // Show date.
@@ -59,9 +67,9 @@
     const showDate = () => {
         const currentDate = new Date();
         const day = [
-            currentDate.getFullYear(), 
+            currentDate.getDate(),
             currentDate.getMonth() + 1, 
-            currentDate.getDate()
+            currentDate.getFullYear(), 
         ].map( num => num < 10 ? `0${num}`: num ); // Kicseréli a tömb elemeit. Array.map működése:A map egy fv-t vár, ennek egyesével odaadja az elemeket, a fv. csinál vmit, visszaadja az új elemeket
 
         bodyDay.textContent = dayNames[currentDate.getDay()]; // Megvan a nap neve. 
@@ -69,7 +77,48 @@
              
     };
 
+    // Set event listeners. Minden eseménykezelő egybe összeszedve egy fv.be
+    const setListeners = () => {
+        todoAddBtn.addEventListener('click', addNewTodo);
+    };
+
+    // Save and add todo to the database.
+    const addNewTodo = () => {
+        const value = todoInput.value;
+        if (value === '') {
+            alert('Please type a todo.');
+            return;
+        }
+
+        const todo = {
+            text: value,
+            done: false 
+        };
+
+        todos.push(todo); // Tömb végére berakom az új todo-t
+
+        localDB.setItem('todos', todos);
+
+        showTodo(todo);
+
+        todoInput.value = '';
+    };
     
+    // Show todo in the list.
+    const showTodo = todo => { 
+        const todoItem = document.createElement('div'); 
+        todoListpending.appendChild(todoItem) // Új gyereket csatolok hozzá -> megjelenik
+        
+        // todo elem belső tartalma (3 részből áll: checkbox, szöveg, törlés gomb)
+        todoItem.innerHTML = `  
+            <input type="checkbox">
+            <span>${todo.text}</span>
+            <button>
+                <i class="fa fa-trash"></i>
+            </button>
+        `;
+    };
+
     init();
 
 })();
